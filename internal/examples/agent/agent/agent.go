@@ -23,8 +23,7 @@ import (
 
 	"github.com/open-telemetry/opamp-go/client"
 	"github.com/open-telemetry/opamp-go/client/types"
-	"github.com/open-telemetry/opamp-go/internal"
-	"github.com/open-telemetry/opamp-go/internal/certs"
+	"github.com/open-telemetry/opamp-go/internal/examples/certs"
 	"github.com/open-telemetry/opamp-go/protobufs"
 )
 
@@ -107,7 +106,7 @@ func NewAgent(logger types.Logger, agentType string, agentVersion string, initia
 			InsecureSkipVerify: true,
 		}
 	} else {
-		tlsConfig, err := internal.CreateClientTLSConfig(
+		tlsConfig, err := certs.CreateClientTLSConfig(
 			agent.opampClientCert,
 			certs.CaCert,
 		)

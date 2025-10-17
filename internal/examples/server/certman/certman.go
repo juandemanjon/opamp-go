@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/open-telemetry/opamp-go/internal/certs"
+	"github.com/open-telemetry/opamp-go/internal/examples/certs"
 	"github.com/open-telemetry/opamp-go/protobufs"
 )
 
@@ -33,7 +33,9 @@ func loadCACert() {
 	caCertPB, _ := pem.Decode(certs.CaCert)
 	caKeyPB, _ := pem.Decode(certs.CaKey)
 
-	caCert, err := x509.ParseCertificate(caCertPB.Bytes)
+	var err error
+
+	caCert, err = x509.ParseCertificate(caCertPB.Bytes)
 	if err != nil {
 		logger.Fatalf("Cannot parse CA certificate: %v", err)
 	}

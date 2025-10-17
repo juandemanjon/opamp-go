@@ -1,6 +1,6 @@
-package internal
+package certs
 
-// This file contains helper functions to read and
+// This file contains helper functions to
 // create TLS configs/certificates. Currently used in
 // the example client and server and
 // in the tests. Not intended for any other use.
@@ -12,6 +12,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	_ "embed"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -23,8 +24,19 @@ import (
 	"github.com/open-telemetry/opamp-go/protobufs"
 )
 
-func CreateClientTLSConfig(clientCert *tls.Certificate, caCertBytes []byte) (*tls.Config, error) {
+//go:embed certs/ca.cert.pem
+var CaCert []byte
 
+//go:embed private/ca.key.pem
+var CaKey []byte
+
+//go:embed server_certs/server.cert.pem
+var ServerCert []byte
+
+//go:embed server_certs/server.key.pem
+var ServerKey []byte
+
+func CreateClientTLSConfig(clientCert *tls.Certificate, caCertBytes []byte) (*tls.Config, error) {
 	// Create a certificate pool and make our CA trusted.
 	caCertPool := x509.NewCertPool()
 	if ok := caCertPool.AppendCertsFromPEM(caCertBytes); !ok {
@@ -102,7 +114,6 @@ func CreateServerTLSConfigFromFiles(caCertPath, serverCertPath, serverKeyPath st
 }
 
 func CreateTLSCert(caCertBytes, caKeyBytes []byte) (*protobufs.TLSCertificate, error) {
-
 	caCertPB, _ := pem.Decode(caCertBytes)
 	caKeyPB, _ := pem.Decode(caKeyBytes)
 	caCert, err := x509.ParseCertificate(caCertPB.Bytes)

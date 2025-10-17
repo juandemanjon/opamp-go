@@ -11,8 +11,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/open-telemetry/opamp-go/internal"
-	"github.com/open-telemetry/opamp-go/internal/certs"
+	"github.com/open-telemetry/opamp-go/internal/examples/certs"
+	"github.com/open-telemetry/opamp-go/internal/examples/html"
 	"github.com/open-telemetry/opamp-go/internal/examples/server/data"
 	"github.com/open-telemetry/opamp-go/protobufs"
 )
@@ -45,10 +45,7 @@ func Shutdown() {
 }
 
 func renderTemplate(w http.ResponseWriter, htmlTemplateFile string, data interface{}) {
-	t, err := template.ParseFiles(
-		path.Join(htmlDir, "header.html"),
-		path.Join(htmlDir, htmlTemplateFile),
-	)
+	t, err := template.ParseFS(html.HtmlFS, "html/*")
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		logger.Printf("Error parsing html template %s: %v", htmlTemplateFile, err)
@@ -145,7 +142,7 @@ func rotateInstanceClientCert(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create a new certificate for the agent.
-	certificate, err := internal.CreateTLSCert(certs.CaCert, certs.CaKey)
+	certificate, err := certs.CreateTLSCert(certs.CaCert, certs.CaKey)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		logger.Println(err)

@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/madflojo/testcerts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -23,7 +24,6 @@ import (
 
 	clienttypes "github.com/open-telemetry/opamp-go/client/types"
 	sharedinternal "github.com/open-telemetry/opamp-go/internal"
-	"github.com/open-telemetry/opamp-go/internal/certs"
 	"github.com/open-telemetry/opamp-go/internal/testhelpers"
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/open-telemetry/opamp-go/server/types"
@@ -1348,11 +1348,14 @@ func TestServerTLS(t *testing.T) {
 		},
 	}
 
-	// Start a Server.
-	srvTLSConfig, err := sharedinternal.CreateServerTLSConfig(
-		certs.CaCert, certs.ServerCert, certs.ServerKey,
-	)
+	ca := testcerts.NewCA()
+	kp, err := ca.NewKeyPair("localhost")
 	require.NoError(t, err)
+
+	srvTLSConfig, err := kp.ConfigureTLSConfig(ca.GenerateTLSConfig())
+	require.NoError(t, err)
+
+	// Start a Server.
 	settings := &StartSettings{Settings: Settings{Callbacks: callbacks}, TLSConfig: srvTLSConfig}
 	srv := startServer(t, settings)
 	defer srv.Stop(context.Background())
