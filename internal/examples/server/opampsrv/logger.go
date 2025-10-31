@@ -10,13 +10,13 @@ import (
 var _ types.Logger = &Logger{}
 
 type Logger struct {
-	logger *log.Logger
+	Logger *log.Logger
 }
 
 func (l *Logger) Debugf(ctx context.Context, format string, v ...interface{}) {
-	l.logger.Printf(format, v...)
+	l.Logger.Printf(format, v...)
 }
 
 func (l *Logger) Errorf(ctx context.Context, format string, v ...interface{}) {
-	l.logger.Printf(format, v...)
+	l.Logger.Printf(format, v...)
 }

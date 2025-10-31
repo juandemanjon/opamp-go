@@ -21,7 +21,7 @@ func main() {
 
 	flag.Parse()
 
-	agent := agent.NewAgent(&agent.Logger{log.Default()}, agentType, agentVersion, initialInsecureConnection)
+	agent := agent.NewAgent(&agent.Logger{Logger: log.Default()}, agentType, agentVersion, initialInsecureConnection)
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)

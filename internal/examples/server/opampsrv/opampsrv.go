@@ -2,11 +2,11 @@ package opampsrv
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"os"
 
 	"github.com/oklog/ulid/v2"
+	clientTypes "github.com/open-telemetry/opamp-go/client/types"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 
 	"github.com/open-telemetry/opamp-go/internal/examples/certs"
@@ -19,17 +19,17 @@ import (
 type Server struct {
 	opampSrv server.OpAMPServer
 	agents   *data.Agents
-	logger   *Logger
+	logger   clientTypes.Logger
 }
 
-func NewServer(agents *data.Agents) *Server {
-	logger := &Logger{
-		log.New(
-			log.Default().Writer(),
-			"[OPAMP] ",
-			log.Default().Flags()|log.Lmsgprefix|log.Lmicroseconds,
-		),
-	}
+func NewServer(logger clientTypes.Logger, agents *data.Agents) *Server {
+	// logger := &Logger{
+	// 	logger: log.New(
+	// 		log.Default().Writer(),
+	// 		"[OPAMP] ",
+	// 		log.Default().Flags()|log.Lmsgprefix|log.Lmicroseconds,
+	// 	),
+	// }
 
 	srv := &Server{
 		agents: agents,

@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"path"
 	"text/template"
 	"time"
 
@@ -18,14 +17,12 @@ import (
 )
 
 var (
-	htmlDir string
-	srv     *http.Server
+	srv *http.Server
 )
 
 var logger = log.New(log.Default().Writer(), "[UI] ", log.Default().Flags()|log.Lmsgprefix|log.Lmicroseconds)
 
 func Start(rootDir string) {
-	htmlDir = path.Join(rootDir, "uisrv/html")
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", renderRoot)
@@ -33,6 +30,7 @@ func Start(rootDir string) {
 	mux.HandleFunc("/save_config", saveCustomConfigForInstance)
 	mux.HandleFunc("/rotate_client_cert", rotateInstanceClientCert)
 	mux.HandleFunc("/opamp_connection_settings", opampConnectionSettings)
+	mux.HandleFunc("/api/save_config", apiSaveCustomConfigForInstance)
 	srv = &http.Server{
 		Addr:    "0.0.0.0:4321",
 		Handler: mux,

@@ -75,6 +75,10 @@ type Agent struct {
 	clientPrivateKeyPEM []byte
 }
 
+func (agent *Agent) InstanceId() uuid.UUID {
+	return agent.instanceId
+}
+
 type proxySettings struct {
 	url     string
 	headers http.Header
