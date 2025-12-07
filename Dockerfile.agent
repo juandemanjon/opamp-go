@@ -1,0 +1,25 @@
+FROM golang:1.24-bookworm AS builder
+
+WORKDIR /src
+
+COPY ./ ./
+
+WORKDIR /src/internal/examples
+
+ENV GOPROXY="direct"
+
+RUN go mod download
+
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags "-s -w" -o agent/bin/agent agent/main.go
+
+FROM gcr.io/distroless/static-debian12:nonroot
+
+WORKDIR /app
+
+COPY --from=builder /src/internal/examples/agent/bin/agent ./
+
+ENTRYPOINT ["./agent"]
+
+# docker build -f Dockerfile.agent -t opamp-agent-example:$(git rev-parse --short HEAD) .
+
+# docker run --rm opamp-agent-example:$(git rev-parse --short HEAD)
