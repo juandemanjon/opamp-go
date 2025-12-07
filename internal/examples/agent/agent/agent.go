@@ -54,6 +54,8 @@ type Agent struct {
 
 	effectiveConfig string
 
+	serverHost string
+
 	instanceId uuid.UUID
 
 	agentDescription *protobufs.AgentDescription
@@ -87,12 +89,13 @@ func (p *proxySettings) Clone() *proxySettings {
 	}
 }
 
-func NewAgent(logger types.Logger, agentType string, agentVersion string, initialInsecureConnection bool) *Agent {
+func NewAgent(logger types.Logger, agentType string, agentVersion string, initialInsecureConnection bool, serverHost string) *Agent {
 	agent := &Agent{
 		effectiveConfig: localConfig,
 		logger:          logger,
 		agentType:       agentType,
 		agentVersion:    agentVersion,
+		serverHost:      serverHost,
 	}
 
 	agent.createAgentIdentity()
@@ -148,7 +151,7 @@ func (agent *Agent) connect(ops ...settingsOp) error {
 	agent.opampClient = client.NewWebSocket(agent.logger)
 
 	settings := types.StartSettings{
-		OpAMPServerURL: "wss://127.0.0.1:4320/v1/opamp",
+		OpAMPServerURL: fmt.Sprintf("wss://%s:4320/v1/opamp", agent.serverHost),
 		InstanceUid:    types.InstanceUid(agent.instanceId),
 		Callbacks: types.Callbacks{
 			OnConnect: func(ctx context.Context) {
