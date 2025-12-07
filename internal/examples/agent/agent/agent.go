@@ -23,7 +23,7 @@ import (
 
 	"github.com/open-telemetry/opamp-go/client"
 	"github.com/open-telemetry/opamp-go/client/types"
-	"github.com/open-telemetry/opamp-go/internal/examples/certs"
+	"github.com/open-telemetry/opamp-go/internal/examples/config"
 	"github.com/open-telemetry/opamp-go/protobufs"
 )
 
@@ -51,6 +51,8 @@ type Agent struct {
 
 	agentType    string
 	agentVersion string
+
+	agentConfig *config.AgentConfig
 
 	effectiveConfig string
 
@@ -89,13 +91,13 @@ func (p *proxySettings) Clone() *proxySettings {
 	}
 }
 
-func NewAgent(logger types.Logger, agentType string, agentVersion string, initialInsecureConnection bool, serverHost string) *Agent {
+func NewAgent(logger types.Logger, agentType, agentVersion string, agentConfig *config.AgentConfig) *Agent {
 	agent := &Agent{
 		effectiveConfig: localConfig,
 		logger:          logger,
 		agentType:       agentType,
 		agentVersion:    agentVersion,
-		serverHost:      serverHost,
+		agentConfig:     agentConfig,
 	}
 
 	agent.createAgentIdentity()
@@ -104,22 +106,13 @@ func NewAgent(logger types.Logger, agentType string, agentVersion string, initia
 
 	agent.loadLocalConfig()
 
-	if initialInsecureConnection {
-		agent.tlsConfig = &tls.Config{
-			InsecureSkipVerify: true,
-		}
-	} else {
-		tlsConfig, err := certs.CreateClientTLSConfig(
-			agent.opampClientCert,
-			certs.CaCert,
-		)
-		if err != nil {
-			agent.logger.Errorf(context.Background(), "Cannot load client TLS config: %v", err)
-			return nil
-		}
-		agent.tlsConfig = tlsConfig
+	tls, err := agentConfig.GetTLSConfig(context.Background())
+	if err != nil {
+		agent.logger.Errorf(context.Background(), "Cannot get the TLS config: %v", err)
+		return nil
 	}
-	if err := agent.connect(withTLSConfig(agent.tlsConfig)); err != nil {
+
+	if err = agent.connect(withTLSConfig(tls)); err != nil {
 		agent.logger.Errorf(context.Background(), "Cannot connect OpAMP client: %v", err)
 		return nil
 	}
@@ -151,7 +144,7 @@ func (agent *Agent) connect(ops ...settingsOp) error {
 	agent.opampClient = client.NewWebSocket(agent.logger)
 
 	settings := types.StartSettings{
-		OpAMPServerURL: fmt.Sprintf("wss://%s:4320/v1/opamp", agent.serverHost),
+		OpAMPServerURL: agent.agentConfig.Endpoint,
 		InstanceUid:    types.InstanceUid(agent.instanceId),
 		Callbacks: types.Callbacks{
 			OnConnect: func(ctx context.Context) {
