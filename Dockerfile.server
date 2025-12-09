@@ -21,7 +21,3 @@ COPY --from=builder /src/internal/examples/server/bin/server ./
 EXPOSE 4320 4321
 
 ENTRYPOINT ["./server"]
-
-# docker build -f Dockerfile.server -t opamp-server-example:$(git rev-parse --short HEAD) .
-
-# docker run --rm -p 4320:4320 -p 4321:4321 opamp-server-example:$(git rev-parse --short HEAD)
