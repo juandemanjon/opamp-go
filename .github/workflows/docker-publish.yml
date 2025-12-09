@@ -13,6 +13,8 @@ env:
 permissions:
   contents: read
   packages: write  # Required for pushing to GitHub Container Registry
+  id-token: write  # Required for artifact attestation
+  attestations: write  # Required for artifact attestation
 
 jobs:
   build-and-push:
@@ -54,6 +56,7 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Docker image
+        id: build
         uses: docker/build-push-action@v5
         with:
           context: ${{ matrix.context }}
