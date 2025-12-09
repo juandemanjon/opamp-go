@@ -76,6 +76,27 @@ run-docker: build-docker-server build-docker-agent
 	docker run --rm --name opamp-agent --network host opamp-agent-example:$(shell git rev-parse --short HEAD) --endpoint wss://$(shell hostname):4320/v1/opamp --tls-insecure_skip_verify; \
 	docker stop opamp-server 2>/dev/null || true
 
+.PHONY: docker-compose-up
+docker-compose-up:
+	docker compose up --build
+
+.PHONY: docker-compose-down
+docker-compose-down:
+	docker compose down
+
+.PHONY: docker-compose-logs
+docker-compose-logs:
+	docker compose logs -f
+
+.PHONY: docker-compose-scale
+docker-compose-scale:
+	@echo "Usage: make docker-compose-scale AGENTS=<number>"
+	@if [ -z "$(AGENTS)" ]; then \
+		echo "Error: AGENTS variable not set"; \
+		exit 1; \
+	fi
+	docker compose up --scale opamp-agent=$(AGENTS) -d
+
 OTEL_DOCKER_PROTOBUF ?= otel/build-protobuf:0.14.0
 
 # Generate Protobuf Go files.

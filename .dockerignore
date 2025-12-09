@@ -50,5 +50,6 @@ renovate.json
 # Dockerfiles
 Dockerfile*
 .dockerignore
+docker-compose.yml
 
 makefile
