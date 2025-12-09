@@ -36,9 +36,6 @@ func main() {
 	var endpoint string
 	flag.StringVar(&endpoint, "endpoint", "wss://127.0.0.1:4320/v1/opamp", "OpAMP server endpoint URL")
 
-	var serverHost string
-	flag.StringVar(&agentVersion, "server-host", "127.0.0.1", "Server Host String")
-
 	flag.Parse()
 
 	config := &config.AgentConfig{
