@@ -88,8 +88,10 @@ func (r *receivedProcessor) ProcessReceivedMessage(ctx context.Context, msg *pro
 		}
 	}
 
-	if msg.ConnectionSettings != nil {
+	processConnectionSettings := msg.ConnectionSettings != nil && r.connectionSettingsHashChanged(ctx, msg.ConnectionSettings.Hash)
+	if processConnectionSettings {
 		msgData.OfferedConnectionsSettingsHash = msg.ConnectionSettings.Hash
+		r.clientSyncedState.SetLastConnectionSettingsHash(msg.ConnectionSettings.Hash)
 		if r.hasCapability(protobufs.AgentCapabilities_AgentCapabilities_ReportsConnectionSettingsStatus) {
 			connectionStatus := &protobufs.ConnectionSettingsStatus{
 				LastConnectionSettingsHash: msg.ConnectionSettings.Hash,
@@ -194,9 +196,11 @@ func (r *receivedProcessor) ProcessReceivedMessage(ctx context.Context, msg *pro
 
 	r.callbacks.OnMessage(ctx, msgData)
 
-	r.rcvOpampConnectionSettings(ctx, msg.ConnectionSettings)
+	if processConnectionSettings {
+		r.rcvOpampConnectionSettings(ctx, msg.ConnectionSettings)
 
-	r.rcvConnectionSettings(ctx, msg.ConnectionSettings)
+		r.rcvConnectionSettings(ctx, msg.ConnectionSettings)
+	}
 
 	if scheduled {
 		r.sender.ScheduleSend()
@@ -210,6 +214,20 @@ func (r *receivedProcessor) ProcessReceivedMessage(ctx context.Context, msg *pro
 
 func (r *receivedProcessor) hasCapability(capability protobufs.AgentCapabilities) bool {
 	return r.clientSyncedState.Capabilities()&capability != 0
+}
+
+// connectionSettingsHashChanged returns true if the offered connection settings
+// should be processed. It returns false when the offered hash matches the last
+// processed hash, indicating there is no need to reprocess the settings.
+func (r *receivedProcessor) connectionSettingsHashChanged(ctx context.Context, hash []byte) bool {
+	if len(hash) == 0 {
+		return true
+	}
+	if bytes.Equal(r.clientSyncedState.LastConnectionSettingsHash(), hash) {
+		r.logger.Debugf(ctx, "Skipping ConnectionSettings processing, hash unchanged")
+		return false
+	}
+	return true
 }
 
 func (r *receivedProcessor) rcvFlags(
@@ -236,6 +254,9 @@ func (r *receivedProcessor) rcvFlags(
 				msg.CustomCapabilities = r.clientSyncedState.CustomCapabilities()
 				msg.Flags = r.clientSyncedState.Flags()
 				msg.AvailableComponents = r.clientSyncedState.AvailableComponents()
+				if r.hasCapability(protobufs.AgentCapabilities_AgentCapabilities_ReportsConnectionSettingsStatus) {
+					msg.ConnectionSettingsStatus = r.clientSyncedState.ConnectionSettingsStatus()
+				}
 
 				// The logic for EffectiveConfig is similar to the previous 6 sub-messages however
 				// the EffectiveConfig is fetched using GetEffectiveConfig instead of
@@ -335,7 +356,7 @@ func (r *receivedProcessor) rcvConnectionSettings(ctx context.Context, settings 
 	}
 
 	if clone.OwnMetrics != nil || clone.OwnTraces != nil || clone.OwnLogs != nil || clone.OtherConnections != nil {
-		err := r.callbacks.OnConnectionSettings(ctx, settings)
+		err := r.callbacks.OnConnectionSettings(ctx, clone)
 		if err != nil {
 			r.logger.Errorf(ctx, "Failed to process ConnectionSettings: %v", err)
 		}
